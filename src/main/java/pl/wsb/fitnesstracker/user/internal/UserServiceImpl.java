@@ -1,5 +1,6 @@
 package pl.wsb.fitnesstracker.user.internal;
 
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,10 +44,33 @@ class UserServiceImpl implements UserService, UserProvider {
         return userRepository.findAll();
     }
 
-    List<User> getUsersOlderThan(LocalDate date);
+
+    public  Optional<User> deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new EntityNotFoundException("User with id " + id + " not found");
+        }
+        userRepository.deleteById(id);
+        return Optional.empty();
+    }
+    //@Override
+    public User updateUser(Long id, User updatedUser) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User with id " + id + " not found"));
+
+        // Update fields
+        existingUser.setFirstName(updatedUser.getFirstName());
+        existingUser.setLastName(updatedUser.getLastName());
+        existingUser.setBirthdate(updatedUser.getBirthdate());
+        existingUser.setEmail(updatedUser.getEmail());
+
+        return userRepository.save(existingUser);
     }
 
-    public void deleteUserById(Long userId) {
+    //@Override
+    public List<User> findUsersOlderThan(int age) {
+        LocalDate cutoffDate = LocalDate.now().minusYears(age);
+        return userRepository.findByBirthdateBefore(cutoffDate);
     }
 
 }
+
